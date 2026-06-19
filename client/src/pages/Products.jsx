@@ -8,7 +8,6 @@ function Products() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
-  const [preview, setPreview] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -20,14 +19,18 @@ function Products() {
     image: null,
   });
 
+  const fetchProducts = async () => {
+    try {
+      const res = await API.get("/products");
+      setProducts(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
-
-  const fetchProducts = async () => {
-    const res = await API.get("/products");
-    setProducts(res.data);
-  };
 
   const handleChange = (e) => {
     if (e.target.name === "image") {
@@ -35,8 +38,6 @@ function Products() {
         ...formData,
         image: e.target.files[0],
       });
-
-      setPreview(URL.createObjectURL(e.target.files[0]));
     } else {
       setFormData({
         ...formData,
@@ -61,35 +62,28 @@ function Products() {
       data.append("image", formData.image);
     }
 
-    if (editingId) {
-      await API.put(`/products/${editingId}`, data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    try {
+      if (editingId) {
+        await API.put(`/products/${editingId}`, data);
+        setEditingId(null);
+      } else {
+        await API.post("/products", data);
+      }
+
+      setFormData({
+        name: "",
+        category: "",
+        price: "",
+        stock: "",
+        size: "",
+        color: "",
+        image: null,
       });
 
-      setEditingId(null);
-    } else {
-      await API.post("/products", data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      fetchProducts();
+    } catch (error) {
+      console.log(error);
     }
-
-    setFormData({
-      name: "",
-      category: "",
-      price: "",
-      stock: "",
-      size: "",
-      color: "",
-      image: null,
-    });
-
-    setPreview("");
-
-    fetchProducts();
   };
 
   const handleEdit = (product) => {
@@ -104,13 +98,15 @@ function Products() {
       color: product.color,
       image: null,
     });
-
-    setPreview(product.image);
   };
 
   const handleDelete = async (id) => {
-    await API.delete(`/products/${id}`);
-    fetchProducts();
+    try {
+      await API.delete(`/products/${id}`);
+      fetchProducts();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const exportCSV = () => {
@@ -143,9 +139,7 @@ function Products() {
 
         <div className="p-8">
           <div className="flex justify-between mb-6">
-            <h1 className="text-3xl font-bold">
-              Products
-            </h1>
+            <h1 className="text-3xl font-bold">Products</h1>
 
             <button
               onClick={exportCSV}
@@ -168,7 +162,7 @@ function Products() {
             onSubmit={handleSubmit}
           >
             <div className="grid grid-cols-2 gap-4">
-                            <input
+              <input
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -220,26 +214,17 @@ function Products() {
                 type="file"
                 name="image"
                 accept="image/*"
-                capture="environment"
                 onChange={handleChange}
                 className="border p-3 rounded col-span-2"
               />
             </div>
-
-            {preview && (
-              <img
-                src={preview}
-                alt=""
-                className="h-40 w-40 object-cover rounded mt-4"
-              />
-            )}
 
             <button className="bg-blue-600 text-white px-6 py-3 rounded mt-6">
               {editingId ? "Update Product" : "Add Product"}
             </button>
           </form>
 
-          <div className="bg-white rounded-xl shadow overflow-hidden">
+          <div className="bg-white rounded-xl shadow overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-900 text-white">
                 <tr>
@@ -255,24 +240,22 @@ function Products() {
 
               <tbody>
                 {filteredProducts.map((product) => (
-                  <tr key={product._id} className="border-b text-center">
-
-                    <td className="p-3">
-                      {product.image && (
+                  <tr key={product._id} className="text-center border-b">
+                    <td className="p-4">
+                      {product.image ? (
                         <img
                           src={product.image}
-                          alt=""
-                          className="h-16 w-16 object-cover rounded mx-auto"
+                          alt={product.name}
+                          className="w-20 h-20 object-cover rounded mx-auto"
                         />
+                      ) : (
+                        "No Image"
                       )}
                     </td>
 
                     <td>{product.name}</td>
-
                     <td>{product.category}</td>
-
                     <td>₹{product.price}</td>
-
                     <td>{product.stock}</td>
 
                     <td>
@@ -302,13 +285,11 @@ function Products() {
                         Delete
                       </button>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
         </div>
       </div>
     </div>
