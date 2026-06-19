@@ -9,6 +9,8 @@ const customerRoutes = require("./routes/customerRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const returnRoutes = require("./routes/returnRoutes");
 
+const startBot = require("./whatsapp/bot");
+
 const app = express();
 
 app.use(cors());
@@ -29,10 +31,12 @@ mongoose
   .then(() => {
     console.log("MongoDB Connected");
 
+    startBot();
+
     app.listen(process.env.PORT, () => {
-      console.log(
-        `Server running on port ${process.env.PORT}`
-      );
+      console.log(`Server running on port ${process.env.PORT}`);
     });
   })
-  .catch((err) => console.log(err));
+  .catch((err) => {
+    console.log(err);
+  });

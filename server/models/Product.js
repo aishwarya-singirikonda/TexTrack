@@ -7,6 +7,11 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
+    brand: {
+      type: String,
+      default: "",
+    },
+
     category: {
       type: String,
       required: true,

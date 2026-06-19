@@ -5,9 +5,10 @@ const addProduct = async (req, res) => {
   try {
     const product = await Product.create({
       name: req.body.name,
+      brand: req.body.brand,
       category: req.body.category,
-      price: req.body.price,
-      stock: req.body.stock,
+      price: Number(req.body.price),
+      stock: Number(req.body.stock),
       size: req.body.size,
       color: req.body.color,
       image: req.file ? req.file.path : "",
@@ -15,6 +16,11 @@ const addProduct = async (req, res) => {
 
     res.status(201).json(product);
   } catch (error) {
+    console.log("ADD PRODUCT ERROR");
+    console.log(error);
+    console.log(error.message);
+    console.log(error.stack);
+
     res.status(500).json({
       message: error.message,
     });
@@ -30,6 +36,9 @@ const getProducts = async (req, res) => {
 
     res.json(products);
   } catch (error) {
+    console.log("GET PRODUCT ERROR");
+    console.log(error);
+
     res.status(500).json({
       message: error.message,
     });
@@ -48,9 +57,10 @@ const updateProduct = async (req, res) => {
     }
 
     existingProduct.name = req.body.name;
+    existingProduct.brand = req.body.brand;
     existingProduct.category = req.body.category;
-    existingProduct.price = req.body.price;
-    existingProduct.stock = req.body.stock;
+    existingProduct.price = Number(req.body.price);
+    existingProduct.stock = Number(req.body.stock);
     existingProduct.size = req.body.size;
     existingProduct.color = req.body.color;
 
@@ -62,6 +72,10 @@ const updateProduct = async (req, res) => {
 
     res.json(existingProduct);
   } catch (error) {
+    console.log("UPDATE PRODUCT ERROR");
+    console.log(error);
+    console.log(error.message);
+
     res.status(500).json({
       message: error.message,
     });
@@ -77,6 +91,9 @@ const deleteProduct = async (req, res) => {
       message: "Product deleted successfully",
     });
   } catch (error) {
+    console.log("DELETE PRODUCT ERROR");
+    console.log(error);
+
     res.status(500).json({
       message: error.message,
     });
@@ -111,6 +128,9 @@ const getStats = async (req, res) => {
       inventoryValue,
     });
   } catch (error) {
+    console.log("STATS ERROR");
+    console.log(error);
+
     res.status(500).json({
       message: error.message,
     });
