@@ -8,15 +8,17 @@ const {
   getStats,
 } = require("../controllers/productController");
 
+const upload = require("../middleware/upload");
+
 const router = express.Router();
 
-router.post("/", addProduct);
+router.post("/", upload.single("image"), addProduct);
 
 router.get("/", getProducts);
 
 router.get("/stats", getStats);
 
-router.put("/:id", updateProduct);
+router.put("/:id", upload.single("image"), updateProduct);
 
 router.delete("/:id", deleteProduct);
 

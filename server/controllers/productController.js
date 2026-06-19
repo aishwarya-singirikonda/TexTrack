@@ -3,10 +3,21 @@ const Product = require("../models/Product");
 // Add Product
 const addProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    const product = await Product.create({
+      name: req.body.name,
+      category: req.body.category,
+      price: req.body.price,
+      stock: req.body.stock,
+      size: req.body.size,
+      color: req.body.color,
+      image: req.file ? req.file.path : "",
+    });
+
     res.status(201).json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -28,13 +39,28 @@ const getProducts = async (req, res) => {
 // Update Product
 const updateProduct = async (req, res) => {
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const existingProduct = await Product.findById(req.params.id);
 
-    res.json(updatedProduct);
+    if (!existingProduct) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    existingProduct.name = req.body.name;
+    existingProduct.category = req.body.category;
+    existingProduct.price = req.body.price;
+    existingProduct.stock = req.body.stock;
+    existingProduct.size = req.body.size;
+    existingProduct.color = req.body.color;
+
+    if (req.file) {
+      existingProduct.image = req.file.path;
+    }
+
+    await existingProduct.save();
+
+    res.json(existingProduct);
   } catch (error) {
     res.status(500).json({
       message: error.message,

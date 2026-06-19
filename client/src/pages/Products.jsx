@@ -7,6 +7,8 @@ import Navbar from "../components/Navbar";
 function Products() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [preview, setPreview] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -15,34 +17,64 @@ function Products() {
     stock: "",
     size: "",
     color: "",
+    image: null,
   });
 
-  const [editingId, setEditingId] = useState(null);
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const fetchProducts = async () => {
     const res = await API.get("/products");
     setProducts(res.data);
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    if (e.target.name === "image") {
+      setFormData({
+        ...formData,
+        image: e.target.files[0],
+      });
+
+      setPreview(URL.createObjectURL(e.target.files[0]));
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const data = new FormData();
+
+    data.append("name", formData.name);
+    data.append("category", formData.category);
+    data.append("price", formData.price);
+    data.append("stock", formData.stock);
+    data.append("size", formData.size);
+    data.append("color", formData.color);
+
+    if (formData.image) {
+      data.append("image", formData.image);
+    }
+
     if (editingId) {
-      await API.put(`/products/${editingId}`, formData);
+      await API.put(`/products/${editingId}`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       setEditingId(null);
     } else {
-      await API.post("/products", formData);
+      await API.post("/products", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
     }
 
     setFormData({
@@ -52,7 +84,10 @@ function Products() {
       stock: "",
       size: "",
       color: "",
+      image: null,
     });
+
+    setPreview("");
 
     fetchProducts();
   };
@@ -67,7 +102,10 @@ function Products() {
       stock: product.stock,
       size: product.size,
       color: product.color,
+      image: null,
     });
+
+    setPreview(product.image);
   };
 
   const handleDelete = async (id) => {
@@ -130,7 +168,7 @@ function Products() {
             onSubmit={handleSubmit}
           >
             <div className="grid grid-cols-2 gap-4">
-              <input
+                            <input
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -177,7 +215,24 @@ function Products() {
                 placeholder="Color"
                 className="border p-3 rounded"
               />
+
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                capture="environment"
+                onChange={handleChange}
+                className="border p-3 rounded col-span-2"
+              />
             </div>
+
+            {preview && (
+              <img
+                src={preview}
+                alt=""
+                className="h-40 w-40 object-cover rounded mt-4"
+              />
+            )}
 
             <button className="bg-blue-600 text-white px-6 py-3 rounded mt-6">
               {editingId ? "Update Product" : "Add Product"}
@@ -188,7 +243,8 @@ function Products() {
             <table className="w-full">
               <thead className="bg-slate-900 text-white">
                 <tr>
-                  <th className="p-4">Name</th>
+                  <th className="p-4">Image</th>
+                  <th>Name</th>
                   <th>Category</th>
                   <th>Price</th>
                   <th>Stock</th>
@@ -199,10 +255,24 @@ function Products() {
 
               <tbody>
                 {filteredProducts.map((product) => (
-                  <tr key={product._id} className="text-center border-b">
-                    <td className="p-4">{product.name}</td>
+                  <tr key={product._id} className="border-b text-center">
+
+                    <td className="p-3">
+                      {product.image && (
+                        <img
+                          src={product.image}
+                          alt=""
+                          className="h-16 w-16 object-cover rounded mx-auto"
+                        />
+                      )}
+                    </td>
+
+                    <td>{product.name}</td>
+
                     <td>{product.category}</td>
+
                     <td>₹{product.price}</td>
+
                     <td>{product.stock}</td>
 
                     <td>
@@ -232,12 +302,13 @@ function Products() {
                         Delete
                       </button>
                     </td>
+
                   </tr>
                 ))}
               </tbody>
-
             </table>
           </div>
+
         </div>
       </div>
     </div>
